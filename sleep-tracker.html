@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Sleep Tracker"/>
+<meta name="theme-color" content="#0f0e1a"/>
+<title>Sleep Tracker · ASD Sleep Data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:        #0f0e1a;
+  --bg2:       #171626;
+  --bg3:       #1e1d30;
+  --card:      #1a1929;
+  --card2:     #201f32;
+  --text:      #e8e6f5;
+  --text2:     #8e8baa;
+  --text3:     #4e4c68;
+  --border:    rgba(140,135,200,0.12);
+  --border2:   rgba(140,135,200,0.22);
+  --accent:    #7c6ff7;
+  --accent2:   #a78bfa;
+  --accent-bg: rgba(124,111,247,0.15);
+  --star:      #f4c94e;
+  --teal:      #2dd4bf;
+  --teal-bg:   rgba(45,212,191,0.12);
+  --rose:      #f87171;
+  --rose-bg:   rgba(248,113,113,0.12);
+  --amber:     #fbbf24;
+  --amber-bg:  rgba(251,191,36,0.12);
+  --green:     #4ade80;
+  --green-bg:  rgba(74,222,128,0.12);
+  --radius:    12px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --safe-top:  env(safe-area-inset-top, 0px);
+  --safe-bot:  env(safe-area-inset-bottom, 0px);
+  --font:      'Sora', system-ui, sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text)}
+body{overflow-x:hidden}
+
+/* ── Stars background ── */
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s)}
+@keyframes twinkle{0%,100%{opacity:var(--min-op,0.1)}50%{opacity:var(--max-op,0.6)}}
+
+.app{max-width:430px;margin:0 auto;background:transparent;min-height:100dvh;display:flex;flex-direction:column;position:relative;z-index:1}
+
+/* ── Header ── */
+.header{
+  background:linear-gradient(180deg,rgba(15,14,26,0.98) 0%,rgba(26,25,41,0.96) 100%);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  padding:calc(var(--safe-top) + 44px) 16px 16px;
+  border-bottom:0.5px solid var(--border);flex-shrink:0;
+}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between}
+.header-icon{width:38px;height:38px;background:var(--accent-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;border:0.5px solid rgba(124,111,247,0.3);flex-shrink:0}
+.header h1{font-size:21px;font-weight:700;letter-spacing:-0.5px;line-height:1.1;color:var(--text)}
+.header h1 em{font-style:normal;color:var(--accent2)}
+.header p{font-size:12px;color:var(--text2);margin-top:3px;font-weight:400}
+.streak-badge{
+  background:linear-gradient(135deg,var(--amber-bg),rgba(251,191,36,0.05));
+  border:0.5px solid rgba(251,191,36,0.35);
+  color:var(--amber);font-size:11px;font-weight:600;
+  padding:4px 10px;border-radius:99px;white-space:nowrap;margin-top:4px;
+  display:inline-flex;align-items:center;gap:4px
+}
+
+/* ── Nav ── */
+.nav{
+  background:rgba(15,14,26,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:0.5px solid var(--border);display:flex;padding-bottom:var(--safe-bot);flex-shrink:0;
+}
+.nav-btn{flex:1;padding:10px 4px 8px;border:none;background:none;cursor:pointer;color:var(--text3);font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--font);font-weight:600;letter-spacing:0.03em;text-transform:uppercase}
+.nav-btn svg{width:21px;height:21px;stroke-width:1.8}
+.nav-btn.active{color:var(--accent2)}
+
+/* ── Scroll area ── */
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px calc(84px + var(--safe-bot))}
+.section{display:none}.section.active{display:block}
+.sec-title{font-size:18px;font-weight:700;letter-spacing:-0.4px;color:var(--text);margin-bottom:14px}
+
+/* ── Cards ── */
+.card{
+  background:var(--card);border:0.5px solid var(--border);
+  border-radius:var(--radius-lg);padding:16px;margin-bottom:10px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.25)
+}
+.card-title{
+  font-size:11px;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:0.07em;margin-bottom:14px;
+  display:flex;align-items:center;gap:6px
+}
+.card-title .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* ── Section dividers ── */
+.divider{height:0.5px;background:var(--border);margin:14px 0}
+
+/* ── Phase pills ── */
+.phase-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
+  padding:4px 10px;border-radius:99px;margin-bottom:12px
+}
+.phase-pill.night{background:var(--accent-bg);color:var(--accent2);border:0.5px solid rgba(167,139,250,0.35)}
+.phase-pill.morning{background:var(--amber-bg);color:var(--amber);border:0.5px solid rgba(251,191,36,0.35)}
+.phase-pill.quality{background:var(--teal-bg);color:var(--teal);border:0.5px solid rgba(45,212,191,0.35)}
+.phase-pill.context{background:var(--green-bg);color:var(--green);border:0.5px solid rgba(74,222,128,0.35)}
+
+/* ── Form elements ── */
+label{font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px;margin-top:13px;letter-spacing:0.02em;text-transform:uppercase}
+label:first-of-type{margin-top:0}
+input[type=text],input[type=time],input[type=date],input[type=number],textarea,select{
+  width:100%;font-size:15px;padding:11px 13px;
+  border-radius:var(--radius);border:0.5px solid var(--border2);
+  background:var(--bg2);color:var(--text);font-family:var(--font);
+  -webkit-appearance:none;appearance:none
+}
+input[type=number]{width:90px}
+textarea{min-height:62px;resize:vertical;line-height:1.55}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+select option{background:var(--bg2)}
+
+/* ── Chip rows ── */
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{padding:5px 12px;border-radius:99px;font-size:12px;font-weight:500;border:0.5px solid var(--border);color:var(--text2);cursor:pointer;background:var(--bg2);font-family:var(--font)}
+.chip.sel-acc{background:var(--accent-bg);border-color:rgba(124,111,247,0.5);color:var(--accent2)}
+.chip.sel-teal{background:var(--teal-bg);border-color:rgba(45,212,191,0.4);color:var(--teal)}
+.chip.sel-amber{background:var(--amber-bg);border-color:rgba(251,191,36,0.4);color:var(--amber)}
+
+/* ── Severity buttons ── */
+.sev-row{display:flex;gap:6px;margin-top:6px}
+.sev-btn{flex:1;padding:11px 4px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);font-family:var(--font);text-align:center;transition:all 0.12s}
+.sev-btn.sel-1{background:var(--green-bg);border-color:rgba(74,222,128,0.4);color:var(--green)}
+.sev-btn.sel-2{background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.4);color:var(--amber)}
+.sev-btn.sel-3{background:rgba(251,146,60,0.12);border-color:rgba(251,146,60,0.4);color:#fb923c}
+.sev-btn.sel-4{background:var(--rose-bg);border-color:rgba(248,113,113,0.4);color:var(--rose)}
+.sev-btn.sel-5{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.5);color:#ef4444}
+
+/* ── Counter (bed exits / wakings) ── */
+.counter-row{display:flex;align-items:center;gap:12px;margin-top:6px}
+.ctr-btn{width:40px;height:40px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg2);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);flex-shrink:0;font-family:var(--font);line-height:1}
+.ctr-btn.plus{background:var(--accent-bg);border-color:rgba(124,111,247,0.4);color:var(--accent2)}
+.ctr-val{font-size:32px;font-weight:700;color:var(--text);min-width:44px;font-family:var(--mono);letter-spacing:-1px}
+.ctr-lbl{font-size:12px;color:var(--text2)}
+
+/* ── Yes/No/Partial toggle ── */
+.toggle-row{display:flex;gap:6px;margin-top:6px}
+.tog-btn{flex:1;padding:10px 6px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);font-family:var(--font);text-align:center}
+.tog-btn.sel-yes{background:var(--green-bg);border-color:rgba(74,222,128,0.4);color:var(--green)}
+.tog-btn.sel-partial{background:var(--amber-bg);border-color:rgba(251,191,36,0.4);color:var(--amber)}
+.tog-btn.sel-no{background:var(--rose-bg);border-color:rgba(248,113,113,0.4);color:var(--rose)}
+
+/* ── Waking list ── */
+.waking-list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.waking-item{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;display:flex;align-items:center;gap:10px}
+.waking-item-info{flex:1;font-size:13px;color:var(--text)}
+.waking-item-dur{font-size:12px;color:var(--text2);font-family:var(--mono)}
+.waking-del{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;display:flex;align-items:center}
+.waking-del svg{width:14px;height:14px;stroke-width:2}
+.add-waking-row{display:grid;grid-template-columns:1fr 80px auto;gap:8px;align-items:end;margin-top:10px}
+.add-waking-row label{margin-top:0}
+.small-add{padding:11px 14px;background:var(--teal-bg);border:0.5px solid rgba(45,212,191,0.4);border-radius:var(--radius);color:var(--teal);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap}
+
+/* ── Submit ── */
+.submit-btn{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,var(--accent),#6d5ce7);
+  border:none;border-radius:var(--radius);
+  color:#fff;font-size:15px;font-weight:700;cursor:pointer;
+  margin-top:14px;font-family:var(--font);letter-spacing:-0.1px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 4px 20px rgba(124,111,247,0.35)
+}
+.submit-btn:active{transform:scale(0.98);opacity:0.9}
+.sec-btn{
+  width:100%;padding:13px;background:var(--bg2);border:0.5px solid var(--border2);
+  border-radius:var(--radius);color:var(--text);font-size:14px;font-weight:600;
+  cursor:pointer;margin-top:8px;font-family:var(--font);
+  display:flex;align-items:center;justify-content:center;gap:6px
+}
+.sec-btn svg{width:16px;height:16px;flex-shrink:0}
+
+/* ── Entry cards ── */
+.entry-card{
+  background:var(--card);border:0.5px solid var(--border);
+  border-radius:var(--radius-lg);margin-bottom:8px;overflow:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,0.2)
+}
+.entry-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--card2);border-bottom:0.5px solid var(--border)}
+.entry-date-row{display:flex;align-items:center;gap:8px}
+.entry-date{font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono)}
+.entry-child{font-size:11px;color:var(--accent2);font-weight:600;background:var(--accent-bg);padding:2px 8px;border-radius:99px}
+.entry-body{padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.entry-row{display:flex;align-items:baseline;gap:8px}
+.entry-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);white-space:nowrap;min-width:72px}
+.entry-val{font-size:13px;color:var(--text);line-height:1.4}
+.entry-footer{display:flex;gap:6px;padding:8px 14px;border-top:0.5px solid var(--border);flex-wrap:wrap;align-items:center}
+.badge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;background:var(--bg2);color:var(--text2);border:0.5px solid var(--border)}
+.badge.good{background:var(--green-bg);color:var(--green);border-color:rgba(74,222,128,0.3)}
+.badge.warn{background:var(--amber-bg);color:var(--amber);border-color:rgba(251,191,36,0.3)}
+.badge.bad{background:var(--rose-bg);color:var(--rose);border-color:rgba(248,113,113,0.3)}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;margin-left:auto;display:flex;align-items:center}
+.del-btn svg{width:15px;height:15px;stroke-width:2}
+
+/* ── Stats ── */
+.stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:13px 14px;border:0.5px solid var(--border)}
+.stat-lbl{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+.stat-val{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-0.5px;font-family:var(--mono)}
+.stat-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.bar-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.bar-row:last-child{border-bottom:none}
+.bar-label{font-size:12px;color:var(--text);min-width:100px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-wrap{flex:1;height:5px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:var(--accent);transition:width 0.4s ease}
+.bar-count{font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono);min-width:24px;text-align:right}
+
+/* ── Filter ── */
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.filter-chip{padding:5px 12px;border-radius:99px;font-size:12px;font-weight:600;border:0.5px solid var(--border);color:var(--text2);cursor:pointer;background:var(--card);font-family:var(--font)}
+.filter-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:3rem 1rem;color:var(--text2);font-size:14px}
+.empty-moon{font-size:48px;display:block;margin-bottom:12px;opacity:0.6}
+
+/* ── Import drop ── */
+.import-drop{border:1.5px dashed var(--border2);border-radius:var(--radius);padding:20px;text-align:center;color:var(--text2);font-size:14px;margin-top:10px;cursor:pointer}
+.import-drop:active{background:var(--bg2)}
+.import-drop svg{width:28px;height:28px;stroke:var(--text3);display:block;margin:0 auto 8px;stroke-width:1.5}
+
+/* ── Sleep quality arc ── */
+.quality-arc{display:flex;justify-content:center;margin:8px 0 14px}
+.arc-wrap{position:relative;width:120px;height:70px}
+.arc-wrap svg{position:absolute;top:0;left:0}
+.arc-label{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:22px;font-weight:700;color:var(--text);font-family:var(--mono)}
+.arc-sub{font-size:10px;color:var(--text2);text-align:center;margin-top:2px}
+
+/* ── Danger card ── */
+.danger-card{background:var(--rose-bg);border:0.5px solid rgba(248,113,113,0.3);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px}
+.danger-title{font-size:12px;font-weight:700;color:var(--rose);margin-bottom:6px;letter-spacing:0.02em}
+.danger-body{font-size:13px;color:var(--rose);opacity:0.85;margin-bottom:10px;line-height:1.5}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:calc(90px + var(--safe-bot));left:50%;transform:translateX(-50%) translateY(10px);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;z-index:999;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.2s,transform 0.2s;box-shadow:0 4px 24px rgba(0,0,0,0.4)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:99px}
+
+/* ── Calc pill ── */
+.calc-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--teal);background:var(--teal-bg);padding:4px 10px;border-radius:99px;margin-top:8px;font-family:var(--mono);font-weight:500;border:0.5px solid rgba(45,212,191,0.3)}
+</style>
+</head>
+<body>
+
+<!-- Starfield -->
+<div class="stars" id="stars"></div>
+
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div class="header-icon">🌙</div>
+        <div>
+          <h1>Sleep <em>Tracker</em></h1>
+          <p>ASD sleep data collection</p>
+        </div>
+      </div>
+      <div>
+        <div class="streak-badge" id="streak-badge">⭐ 0 logged</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-area">
+
+    <!-- ══ LOG TAB ══ -->
+    <div id="sec-log" class="section active">
+      <div class="card">
+
+        <!-- Date / Child -->
+        <div class="row-2" style="margin-bottom:4px">
+          <div>
+            <label>Date</label>
+            <input type="date" id="log-date"/>
+          </div>
+          <div>
+            <label>Child</label>
+            <input type="text" id="log-child" placeholder="Name" autocomplete="off"/>
+            <div class="chip-row" id="child-chips"></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- NIGHT section -->
+        <div class="phase-pill night">🌙 Night — Bedtime</div>
+
+        <div class="row-2">
+          <div>
+            <label>In Bed Time</label>
+            <input type="time" id="bed-time"/>
+          </div>
+          <div>
+            <label>Lights Out</label>
+            <input type="time" id="lights-out"/>
+          </div>
+        </div>
+
+        <label>Pre-Bed Routine Followed?</label>
+        <div class="toggle-row" id="routine-toggle"></div>
+
+        <label>Melatonin / Sleep Aid Given?</label>
+        <div class="toggle-row" id="meds-toggle"></div>
+
+        <label>Bed Exits (times left bed)</label>
+        <div class="counter-row">
+          <button class="ctr-btn" onclick="changeCtr('exits',-1)">−</button>
+          <div>
+            <div class="ctr-val" id="exits-val">0</div>
+            <div class="ctr-lbl">times left bed</div>
+          </div>
+          <button class="ctr-btn plus" onclick="changeCtr('exits',1)">+</button>
+        </div>
+
+        <label>Fell Asleep Time</label>
+        <input type="time" id="sleep-time"/>
+        <div id="onset-calc" class="calc-pill" style="display:none">⏱ Onset: — min</div>
+
+        <div class="divider"></div>
+
+        <!-- MORNING section -->
+        <div class="phase-pill morning">☀️ Morning — Wake Up</div>
+
+        <div class="row-2">
+          <div>
+            <label>Final Wake Time</label>
+            <input type="time" id="wake-time"/>
+          </div>
+          <div>
+            <label>Out of Bed</label>
+            <input type="time" id="out-bed-time"/>
+          </div>
+        </div>
+        <div id="total-sleep-calc" class="calc-pill" style="display:none">🌙 Total sleep: — hrs</div>
+
+        <div class="divider"></div>
+
+        <!-- NIGHT WAKINGS -->
+        <div class="phase-pill" style="background:rgba(167,139,250,0.1);color:#c4b5fd;border:0.5px solid rgba(167,139,250,0.3)">💤 Night Wakings</div>
+
+        <label>Waking counter</label>
+        <div class="counter-row">
+          <button class="ctr-btn" onclick="changeCtr('wakings',-1)">−</button>
+          <div>
+            <div class="ctr-val" id="wakings-val">0</div>
+            <div class="ctr-lbl">times woke</div>
+          </div>
+          <button class="ctr-btn plus" onclick="changeCtr('wakings',1)">+</button>
+        </div>
+
+        <label style="margin-top:14px">Log individual wakings (optional)</label>
+        <div class="waking-list" id="waking-list"></div>
+        <div class="add-waking-row">
+          <div>
+            <label>Wake time</label>
+            <input type="time" id="wk-time"/>
+          </div>
+          <div>
+            <label>Duration (min)</label>
+            <input type="number" id="wk-dur" min="0" max="480" placeholder="30" style="width:100%"/>
+          </div>
+          <button class="small-add" onclick="addWaking()" type="button">+ Add</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- QUALITY / INTERVENTIONS -->
+        <div class="phase-pill quality">📋 Quality &amp; Interventions</div>
+
+        <label>Overall Sleep Quality</label>
+        <div class="sev-row" id="quality-row"></div>
+
+        <label>Behavior Severity During Night</label>
+        <div class="sev-row" id="severity-row"></div>
+
+        <label>Intervention Notes <span style="font-weight:400;text-transform:none;font-size:11px">(what did you do?)</span></label>
+        <textarea id="intervention-notes" placeholder="e.g. Returned child to bed, offered comfort object, used visual schedule…"></textarea>
+        <div class="chip-row" id="intervention-chips"></div>
+
+        <div class="divider"></div>
+
+        <!-- CONTEXT -->
+        <div class="phase-pill context">🌿 Context</div>
+
+        <label>Sleep Environment</label>
+        <textarea id="env-notes" placeholder="e.g. White noise on, room temp cool, blackout curtains…"></textarea>
+        <div class="chip-row" id="env-chips"></div>
+
+        <label>Additional Notes</label>
+        <textarea id="extra-notes" placeholder="Anything else — illness, schedule changes, therapy notes…"></textarea>
+
+        <button class="submit-btn" onclick="submitEntry()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Save Sleep Entry
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ ENTRIES TAB ══ -->
+    <div id="sec-entries" class="section">
+      <div class="filter-row" id="filter-row"></div>
+      <div id="entries-list"></div>
+    </div>
+
+    <!-- ══ STATS TAB ══ -->
+    <div id="sec-stats" class="section">
+      <div class="sec-title">Sleep Summary</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-lbl">Total nights</div><div class="stat-val" id="st-total">0</div></div>
+        <div class="stat-card"><div class="stat-lbl">This week</div><div class="stat-val" id="st-week">0</div></div>
+        <div class="stat-card"><div class="stat-lbl">Avg sleep</div><div class="stat-val" id="st-avg-sleep">—</div><div class="stat-sub">hours/night</div></div>
+        <div class="stat-card"><div class="stat-lbl">Avg onset</div><div class="stat-val" id="st-avg-onset">—</div><div class="stat-sub">min to fall asleep</div></div>
+        <div class="stat-card"><div class="stat-lbl">Avg wakings</div><div class="stat-val" id="st-avg-wak">—</div><div class="stat-sub">per night</div></div>
+        <div class="stat-card"><div class="stat-lbl">Avg bed exits</div><div class="stat-val" id="st-avg-exits">—</div><div class="stat-sub">per night</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--accent2)"></span>Most used interventions</div>
+        <div id="st-interventions"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:var(--teal)"></span>Sleep quality trend (last 7 nights)</div>
+        <div id="st-quality-trend"></div>
+      </div>
+    </div>
+
+    <!-- ══ EXPORT TAB ══ -->
+    <div id="sec-export" class="section">
+      <div class="sec-title">Export &amp; Backup</div>
+      <div class="card">
+        <div style="font-size:14px;color:var(--text2);margin-bottom:6px;line-height:1.6">Export all sleep entries as a <strong style="color:var(--text)">CSV file</strong> that opens directly in Excel or Google Sheets.</div>
+        <div style="font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:4px">
+          Columns: Date, Child, In Bed, Lights Out, Fell Asleep, Onset (min), Final Wake, Out of Bed, Total Sleep (hrs), Bed Exits, Night Wakings, Waking Details, Sleep Quality, Behavior Severity, Routine Followed, Melatonin/Aid, Interventions, Environment, Notes
+        </div>
+        <button class="submit-btn" onclick="exportCSV()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export as CSV (Excel)
+        </button>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;color:var(--text2);margin-bottom:6px;line-height:1.6">Save a <strong style="color:var(--text)">JSON backup</strong> to restore data on another device.</div>
+        <button class="sec-btn" onclick="exportJSON()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export JSON backup
+        </button>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;color:var(--text2);margin-bottom:2px;line-height:1.6">Restore from a JSON backup file.</div>
+        <div class="import-drop" onclick="document.getElementById('imp-file').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Tap to choose a backup file (.json)
+        </div>
+        <input type="file" id="imp-file" accept=".json,application/json" style="display:none" onchange="importJSON(event)"/>
+      </div>
+      <div class="danger-card">
+        <div class="danger-title">⚠ Clear all data</div>
+        <div class="danger-body">Permanently deletes all sleep entries. Export a backup first.</div>
+        <button class="sec-btn" style="border-color:rgba(248,113,113,0.4);color:var(--rose);background:rgba(248,113,113,0.08)" onclick="clearAll()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          Delete all entries
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="switchTab('log',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Log
+    </button>
+    <button class="nav-btn" onclick="switchTab('entries',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Entries
+    </button>
+    <button class="nav-btn" onclick="switchTab('stats',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Stats
+    </button>
+    <button class="nav-btn" onclick="switchTab('export',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export
+    </button>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Starfield ────────────────────────────────────────
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');s.className='star';
+    const size=Math.random()*2+0.5;
+    s.style.cssText=`width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${-Math.random()*6}s;--min-op:${0.05+Math.random()*0.1};--max-op:${0.3+Math.random()*0.5}`;
+    c.appendChild(s);
+  }
+})();
+
+// ── Storage ──────────────────────────────────────────
+const SK='sleep_tracker_v1';
+const load=()=>{try{return JSON.parse(localStorage.getItem(SK)||'[]')}catch{return[]}};
+const save=d=>{try{localStorage.setItem(SK,JSON.stringify(d))}catch{}};
+
+// ── State ────────────────────────────────────────────
+let exitsCtr=0, wakingsCtr=0, wakingsList=[], selQuality=0, selSeverity=0;
+let selRoutine='', selMeds='';
+
+const todayDate=()=>new Date().toISOString().slice(0,10);
+const yesterdayDate=()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().slice(0,10)};
+const nowTime=()=>new Date().toTimeString().slice(0,5);
+
+// ── Presets ───────────────────────────────────────────
+const CHILDREN=['Owen'];
+const INTERVENTION_CHIPS=['Returned to bed','Verbal prompt','Offered comfort object','Used visual schedule','Played calming music','Reduced stimulation','Weighted blanket','Stayed in room','Ignored / extinction','Full physical prompt'];
+const ENV_CHIPS=['White noise','Blackout curtains','Night light on','Fan on','Cool room','Warm room','Shared room','Own room','Sensory items available'];
+
+// ── Build UI ──────────────────────────────────────────
+function buildToggle(id, opts, stateKey) {
+  const r=document.getElementById(id); if(!r) return; r.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button');b.type='button';b.className='tog-btn';b.textContent=o.l;
+    b.onclick=()=>{
+      if(stateKey==='routine') selRoutine=o.v;
+      if(stateKey==='meds') selMeds=o.v;
+      r.querySelectorAll('.tog-btn').forEach(x=>x.className='tog-btn');
+      b.classList.add('sel-'+o.cls);
+    };
+    r.appendChild(b);
+  });
+}
+
+function buildSevRow(id, stateKey) {
+  const r=document.getElementById(id); r.innerHTML='';
+  const labels=stateKey==='quality'
+    ?['1 Poor','2','3 Fair','4','5 Good']
+    :['1 None','2 Mild','3 Mod','4 High','5 Severe'];
+  labels.forEach((l,i)=>{
+    const b=document.createElement('button');b.type='button';b.className='sev-btn';b.textContent=l;
+    b.onclick=()=>{
+      if(stateKey==='quality') selQuality=i+1;
+      else selSeverity=i+1;
+      r.querySelectorAll('.sev-btn').forEach((x,j)=>x.className='sev-btn'+(j===i?' sel-'+(i+1):''));
+    };
+    r.appendChild(b);
+  });
+}
+
+function buildChips(id, items, selClass) {
+  const c=document.getElementById(id); if(!c) return; c.innerHTML='';
+  items.forEach(item=>{
+    const ch=document.createElement('button');ch.type='button';ch.className='chip';ch.textContent=item;
+    ch.onclick=()=>ch.classList.toggle(selClass);
+    c.appendChild(ch);
+  });
+}
+
+function buildChildChips() {
+  const c=document.getElementById('child-chips'); if(!c) return; c.innerHTML='';
+  CHILDREN.forEach(name=>{
+    const ch=document.createElement('button');ch.type='button';ch.className='chip';ch.textContent=name;
+    ch.onclick=()=>{
+      document.getElementById('log-child').value=name;
+      c.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel-acc'));
+      ch.classList.add('sel-acc');
+    };
+    c.appendChild(ch);
+  });
+}
+
+// ── Counters ──────────────────────────────────────────
+function changeCtr(type, delta) {
+  if(type==='exits'){exitsCtr=Math.max(0,exitsCtr+delta);document.getElementById('exits-val').textContent=exitsCtr}
+  if(type==='wakings'){wakingsCtr=Math.max(0,wakingsCtr+delta);document.getElementById('wakings-val').textContent=wakingsCtr}
+}
+
+// ── Waking list ───────────────────────────────────────
+function addWaking() {
+  const t=document.getElementById('wk-time').value;
+  const d=parseInt(document.getElementById('wk-dur').value)||0;
+  if(!t){alert('Please enter a wake time.');return}
+  wakingsList.push({time:t,duration:d});
+  renderWakingList();
+  document.getElementById('wk-time').value='';
+  document.getElementById('wk-dur').value='';
+}
+function removeWaking(i){wakingsList.splice(i,1);renderWakingList()}
+function renderWakingList(){
+  const el=document.getElementById('waking-list');
+  el.innerHTML=wakingsList.map((w,i)=>`
+    <div class="waking-item">
+      <span style="font-size:18px">💤</span>
+      <div class="waking-item-info">${w.time}${w.duration?' · '+w.duration+' min':''}</div>
+      <button class="waking-del" onclick="removeWaking(${i})" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`).join('');
+}
+
+// ── Time math helpers ─────────────────────────────────
+function timeDiffMins(t1,t2){
+  // handles overnight crossing
+  const [h1,m1]=t1.split(':').map(Number);
+  const [h2,m2]=t2.split(':').map(Number);
+  let mins=(h2*60+m2)-(h1*60+m1);
+  if(mins<0)mins+=1440;
+  return mins;
+}
+function minsToHrs(m){return(m/60).toFixed(1)}
+
+function updateCalcPills(){
+  const bedT=document.getElementById('bed-time').value;
+  const sleepT=document.getElementById('sleep-time').value;
+  const wakeT=document.getElementById('wake-time').value;
+  const onsetEl=document.getElementById('onset-calc');
+  const totalEl=document.getElementById('total-sleep-calc');
+  if(bedT&&sleepT){
+    const mins=timeDiffMins(bedT,sleepT);
+    onsetEl.textContent=`⏱ Onset: ${mins} min`;onsetEl.style.display='inline-flex';
+  }else onsetEl.style.display='none';
+  if(sleepT&&wakeT){
+    const hrs=minsToHrs(timeDiffMins(sleepT,wakeT));
+    totalEl.textContent=`🌙 Total sleep: ${hrs} hrs`;totalEl.style.display='inline-flex';
+  }else totalEl.style.display='none';
+}
+
+['bed-time','sleep-time','wake-time'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('change',updateCalcPills);
+});
+
+// ── Get selected chips ────────────────────────────────
+const getSelChips=id=>[...document.querySelectorAll(`#${id} .chip`)].filter(c=>c.className.includes('sel')).map(c=>c.textContent);
+
+// ── Submit ────────────────────────────────────────────
+function submitEntry(){
+  const bedTime=document.getElementById('bed-time').value;
+  const sleepTime=document.getElementById('sleep-time').value;
+  if(!bedTime){alert('Please enter the time the child got into bed.');return}
+
+  const lightsOut=document.getElementById('lights-out').value;
+  const wakeTime=document.getElementById('wake-time').value;
+  const outBed=document.getElementById('out-bed-time').value;
+  const onsetMins=(bedTime&&sleepTime)?timeDiffMins(bedTime,sleepTime):null;
+  const totalSleepHrs=(sleepTime&&wakeTime)?minsToHrs(timeDiffMins(sleepTime,wakeTime)):null;
+
+  const entry={
+    id:Date.now(),
+    date:document.getElementById('log-date').value||todayDate(),
+    child:document.getElementById('log-child').value.trim(),
+    bedTime, lightsOut, sleepTime,
+    onsetMins, wakeTime, outBed, totalSleepHrs,
+    bedExits:exitsCtr,
+    wakingsCount:wakingsCtr,
+    wakingsDetail:[...wakingsList],
+    sleepQuality:selQuality||null,
+    behaviorSeverity:selSeverity||null,
+    routineFollowed:selRoutine,
+    medsGiven:selMeds,
+    interventions:[...getSelChips('intervention-chips'),document.getElementById('intervention-notes').value.trim()].filter(Boolean).join('; '),
+    environment:[...getSelChips('env-chips'),document.getElementById('env-notes').value.trim()].filter(Boolean).join('; '),
+    notes:document.getElementById('extra-notes').value.trim()
+  };
+
+  const data=load();data.unshift(entry);save(data);
+  resetForm();updateAll();toast('Sleep entry saved ✓');
+  switchTab('entries',document.querySelectorAll('.nav-btn')[1]);
+}
+
+function resetForm(){
+  ['bed-time','lights-out','sleep-time','wake-time','out-bed-time'].forEach(id=>document.getElementById(id).value='');
+  ['intervention-notes','env-notes','extra-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('log-date').value=todayDate();
+  exitsCtr=0;wakingsCtr=0;wakingsList=[];selQuality=0;selSeverity=0;selRoutine='';selMeds='';
+  document.getElementById('exits-val').textContent='0';
+  document.getElementById('wakings-val').textContent='0';
+  document.getElementById('onset-calc').style.display='none';
+  document.getElementById('total-sleep-calc').style.display='none';
+  renderWakingList();
+  document.querySelectorAll('.sev-btn,.tog-btn').forEach(b=>{b.className=b.className.replace(/sel-\S+/,'').trim()});
+  document.querySelectorAll('.chip').forEach(c=>{c.className='chip'});
+  buildToggle('routine-toggle',[{v:'yes',l:'✓ Yes',cls:'yes'},{v:'partial',l:'~ Partial',cls:'partial'},{v:'no',l:'✗ No',cls:'no'}],'routine');
+  buildToggle('meds-toggle',[{v:'yes',l:'✓ Yes',cls:'yes'},{v:'no',l:'✗ No',cls:'no'},{v:'na',l:'N/A',cls:'no'}],'meds');
+  buildChildChips();
+}
+
+// ── Entry quality label ───────────────────────────────
+const qualLabel={1:'Poor',2:'Below avg',3:'Fair',4:'Good',5:'Great'};
+const qualClass={1:'bad',2:'bad',3:'warn',4:'good',5:'good'};
+const sevLabel={1:'None',2:'Mild',3:'Moderate',4:'High',5:'Severe'};
+const sevClass={1:'good',2:'good',3:'warn',4:'bad',5:'bad'};
+
+// ── Render entries ────────────────────────────────────
+let activeFilter='all';
+function renderEntries(){
+  const data=load();
+  const filterEl=document.getElementById('filter-row');
+  const dates=[...new Set(data.map(e=>e.date))].slice(0,7);
+  filterEl.innerHTML=`<button class="filter-chip${activeFilter==='all'?' active':''}" onclick="setFilter('all',this)">All (${data.length})</button>`
+    +dates.map(d=>{
+      const lbl=d===todayDate()?'Today':d===yesterdayDate()?'Yesterday':d.slice(5).replace('-','/');
+      const cnt=data.filter(e=>e.date===d).length;
+      return`<button class="filter-chip${activeFilter===d?' active':''}" onclick="setFilter('${d}',this)">${lbl} (${cnt})</button>`;
+    }).join('');
+
+  const filtered=activeFilter==='all'?data:data.filter(e=>e.date===activeFilter);
+  const list=document.getElementById('entries-list');
+  if(!filtered.length){
+    list.innerHTML='<div class="empty"><span class="empty-moon">🌙</span>No entries yet.<br>Use the Log tab to record sleep data.</div>';
+    return;
+  }
+  list.innerHTML=filtered.map(e=>`
+    <div class="entry-card">
+      <div class="entry-header">
+        <div class="entry-date-row">
+          <span class="entry-date">${e.date}</span>
+          ${e.child?`<span class="entry-child">${e.child}</span>`:''}
+        </div>
+        <button class="del-btn" onclick="deleteEntry(${e.id})" aria-label="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
+      <div class="entry-body">
+        ${e.bedTime?`<div class="entry-row"><span class="entry-lbl">In Bed</span><span class="entry-val">${e.bedTime}${e.lightsOut?' · Lights out: '+e.lightsOut:''}</span></div>`:''}
+        ${e.sleepTime?`<div class="entry-row"><span class="entry-lbl">Fell Asleep</span><span class="entry-val">${e.sleepTime}${e.onsetMins!=null?' ('+e.onsetMins+' min onset)':''}</span></div>`:''}
+        ${e.wakeTime?`<div class="entry-row"><span class="entry-lbl">Woke Up</span><span class="entry-val">${e.wakeTime}${e.totalSleepHrs?' · '+e.totalSleepHrs+' hrs total':''}</span></div>`:''}
+        ${e.bedExits||e.wakingsCount?`<div class="entry-row"><span class="entry-lbl">Night</span><span class="entry-val">${e.bedExits} bed exit${e.bedExits!==1?'s':''} · ${e.wakingsCount} waking${e.wakingsCount!==1?'s':''}</span></div>`:''}
+        ${e.wakingsDetail&&e.wakingsDetail.length?`<div class="entry-row"><span class="entry-lbl">Wakings</span><span class="entry-val">${e.wakingsDetail.map(w=>w.time+(w.duration?' ('+w.duration+' min)':'')).join(', ')}</span></div>`:''}
+        ${e.interventions?`<div class="entry-row"><span class="entry-lbl">Intervene</span><span class="entry-val">${e.interventions}</span></div>`:''}
+        ${e.notes?`<div class="entry-row"><span class="entry-lbl">Notes</span><span class="entry-val">${e.notes}</span></div>`:''}
+      </div>
+      <div class="entry-footer">
+        ${e.sleepQuality?`<span class="badge ${qualClass[e.sleepQuality]}">Quality: ${qualLabel[e.sleepQuality]}</span>`:''}
+        ${e.behaviorSeverity?`<span class="badge ${sevClass[e.behaviorSeverity]}">Behavior: ${sevLabel[e.behaviorSeverity]}</span>`:''}
+        ${e.routineFollowed?`<span class="badge ${e.routineFollowed==='yes'?'good':e.routineFollowed==='partial'?'warn':'bad'}">Routine: ${e.routineFollowed}</span>`:''}
+        ${e.medsGiven?`<span class="badge">Meds: ${e.medsGiven}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+function setFilter(v){activeFilter=v;renderEntries()}
+
+function deleteEntry(id){
+  if(!confirm('Delete this sleep entry?'))return;
+  save(load().filter(e=>e.id!==id));updateAll();toast('Entry deleted');
+}
+
+// ── Stats ─────────────────────────────────────────────
+function renderStats(){
+  const data=load();
+  const weekAgo=new Date();weekAgo.setDate(weekAgo.getDate()-7);
+  const thisWeek=data.filter(e=>new Date(e.date)>=weekAgo).length;
+  const withSleep=data.filter(e=>e.totalSleepHrs);
+  const withOnset=data.filter(e=>e.onsetMins!=null);
+  const withWak=data.filter(e=>e.wakingsCount!=null);
+  const withExits=data.filter(e=>e.bedExits!=null);
+
+  document.getElementById('st-total').textContent=data.length;
+  document.getElementById('st-week').textContent=thisWeek;
+  document.getElementById('st-avg-sleep').textContent=withSleep.length?(withSleep.reduce((s,e)=>s+parseFloat(e.totalSleepHrs),0)/withSleep.length).toFixed(1):'—';
+  document.getElementById('st-avg-onset').textContent=withOnset.length?Math.round(withOnset.reduce((s,e)=>s+e.onsetMins,0)/withOnset.length):'—';
+  document.getElementById('st-avg-wak').textContent=withWak.length?(withWak.reduce((s,e)=>s+e.wakingsCount,0)/withWak.length).toFixed(1):'—';
+  document.getElementById('st-avg-exits').textContent=withExits.length?(withExits.reduce((s,e)=>s+e.bedExits,0)/withExits.length).toFixed(1):'—';
+
+  // Interventions frequency
+  const freq={};
+  data.forEach(e=>{
+    if(e.interventions)e.interventions.split(';').map(s=>s.trim()).filter(Boolean).forEach(i=>{freq[i]=(freq[i]||0)+1});
+  });
+  const sorted=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const max=sorted[0]?.[1]||1;
+  const intEl=document.getElementById('st-interventions');
+  intEl.innerHTML=sorted.length?sorted.map(([n,c])=>`
+    <div class="bar-row">
+      <span class="bar-label">${n}</span>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(c/max*100)}%"></div></div>
+      <span class="bar-count">${c}×</span>
+    </div>`).join(''):'<div style="font-size:13px;color:var(--text3)">No data yet.</div>';
+
+  // Quality trend (last 7)
+  const last7=data.slice(0,7).reverse();
+  const trendEl=document.getElementById('st-quality-trend');
+  if(!last7.length){trendEl.innerHTML='<div style="font-size:13px;color:var(--text3)">No data yet.</div>';return}
+  const stars=['','⭐','⭐⭐','⭐⭐⭐','⭐⭐⭐⭐','⭐⭐⭐⭐⭐'];
+  trendEl.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">`+last7.map(e=>`
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:11px;color:var(--text3);font-family:var(--mono);min-width:52px">${e.date.slice(5)}</span>
+      <span style="font-size:13px">${e.sleepQuality?stars[e.sleepQuality]:'—'}</span>
+      <span style="font-size:11px;color:var(--text2)">${e.totalSleepHrs?e.totalSleepHrs+' hrs':''}</span>
+    </div>`).join('')+`</div>`;
+}
+
+// ── Streak badge ──────────────────────────────────────
+function updateBadge(){
+  const n=load().length;
+  document.getElementById('streak-badge').textContent=`⭐ ${n} night${n!==1?'s':''} logged`;
+}
+
+// ── Export ────────────────────────────────────────────
+function escCSV(v){
+  if(v==null)return'';
+  const s=String(v);
+  if(s.includes(',')||s.includes('"')||s.includes('\n'))return'"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+function exportCSV(){
+  const data=load();
+  if(!data.length){alert('No entries to export yet.');return}
+  const headers=['Date','Child','In Bed','Lights Out','Fell Asleep','Onset (min)','Final Wake','Out of Bed','Total Sleep (hrs)','Bed Exits','Night Wakings','Waking Details','Sleep Quality','Behavior Severity','Routine Followed','Melatonin/Aid','Interventions','Environment','Notes'];
+  const rows=data.map(e=>[
+    e.date,e.child,e.bedTime,e.lightsOut,e.sleepTime,
+    e.onsetMins??'',e.wakeTime,e.outBed,e.totalSleepHrs??'',
+    e.bedExits,e.wakingsCount,
+    e.wakingsDetail?e.wakingsDetail.map(w=>w.time+(w.duration?' ('+w.duration+'min)':'')).join(' | '):'',
+    e.sleepQuality?qualLabel[e.sleepQuality]:'',
+    e.behaviorSeverity?sevLabel[e.behaviorSeverity]:'',
+    e.routineFollowed,e.medsGiven,e.interventions,e.environment,e.notes
+  ].map(escCSV).join(','));
+  const csv=[headers.join(','),...rows].join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`sleep-data-${todayDate()}.csv`;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},500);
+  toast('CSV exported — open in Excel');
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(load(),null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`sleep-backup-${todayDate()}.json`;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},500);
+  toast('JSON backup exported');
+}
+function importJSON(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const parsed=JSON.parse(e.target.result);
+      if(!Array.isArray(parsed))throw new Error();
+      const existing=load();
+      const ids=new Set(existing.map(x=>x.id));
+      const merged=[...existing,...parsed.filter(x=>!ids.has(x.id))];
+      merged.sort((a,b)=>b.id-a.id);
+      save(merged);updateAll();toast('Imported '+parsed.length+' entries');
+    }catch{alert('Could not import. Please choose a valid sleep backup (.json).')}
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+function clearAll(){
+  if(!confirm('Permanently delete ALL sleep entries?\n\nExport a backup first.'))return;
+  save([]);updateAll();toast('All data cleared');
+}
+
+// ── Tab switching ─────────────────────────────────────
+function switchTab(tab,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+  btn.classList.add('active');
+  document.querySelector('.scroll-area').scrollTop=0;
+  if(tab==='entries')renderEntries();
+  if(tab==='stats')renderStats();
+}
+
+// ── Toast ─────────────────────────────────────────────
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function updateAll(){updateBadge();renderEntries();renderStats();}
+
+// ── Init ──────────────────────────────────────────────
+document.getElementById('log-date').value=todayDate();
+const prevChild=load()[0]?.child||'';
+if(prevChild)document.getElementById('log-child').value=prevChild;
+
+buildToggle('routine-toggle',[{v:'yes',l:'✓ Yes',cls:'yes'},{v:'partial',l:'~ Partial',cls:'partial'},{v:'no',l:'✗ No',cls:'no'}],'routine');
+buildToggle('meds-toggle',[{v:'yes',l:'✓ Yes',cls:'yes'},{v:'no',l:'✗ No',cls:'no'},{v:'na',l:'N/A',cls:'no'}],'meds');
+buildSevRow('quality-row','quality');
+buildSevRow('severity-row','severity');
+buildChips('intervention-chips',INTERVENTION_CHIPS,'sel-teal');
+buildChips('env-chips',ENV_CHIPS,'sel-acc');
+buildChildChips();
+updateAll();
+</script>
+</body>
+</html>
